@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mass Messaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
+        <h1 class="text-2xl font-bold mb-6">Mass Messaging System</h1>
+        
+        <!-- Subscribe Form -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Subscribe</h2>
+            <form id="subscribeForm" class="space-y-4">
+                <div class="flex items-center space-x-4 mb-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="contactType" value="sms" checked 
+                               class="mr-2">
+                        SMS
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="contactType" value="email" 
+                               class="mr-2">
+                        Email
+                    </label>
+                </div>
+                <input type="text" id="contact" placeholder="Phone Number or Email" 
+                       class="w-full p-2 border rounded" required>
+                <button type="submit" 
+                        class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    Subscribe
+                </button>
+            </form>
+        </div>
+
+        <!-- Unsubscribe Form -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Unsubscribe</h2>
+            <form id="unsubscribeForm" class="space-y-4">
+                <input type="text" id="subscriptionArn" placeholder="Subscription ARN" 
+                       class="w-full p-2 border rounded" required>
+                <button type="submit" 
+                        class="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600">
+                    Unsubscribe
+                </button>
+            </form>
+        </div>
+
+        <!-- Send Message Form (Admin Only) -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Send Message (Admin)</h2>
+            <form id="messageForm" class="space-y-4">
+                <div class="flex items-center space-x-4 mb-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="messageType" value="sms" checked 
+                               class="mr-2">
+                        SMS
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="messageType" value="email" 
+                               class="mr-2">
+                        Email
+                    </label>
+                </div>
+                <div id="emailRecipients" class="hidden">
+                    <input type="text" id="recipients" 
+                           placeholder="Email recipients (comma-separated)" 
+                           class="w-full p-2 border rounded mb-4">
+                </div>
+                <textarea id="message" placeholder="Enter your message" 
+                          class="w-full p-2 border rounded" required></textarea>
+                <button type="submit" 
+                        class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                    Send Message
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Contact type radio buttons handler
+        document.getElementsByName('contactType').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const contactInput = document.getElementById('contact');
+                contactInput.placeholder = e.target.value === 'sms' ? 'Phone Number' : 'Email Address';
+            });
+        });
+
+        // Message type radio buttons handler
+        document.getElementsByName('messageType').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const emailRecipients = document.getElementById('emailRecipients');
+                emailRecipients.style.display = e.target.value === 'email' ? 'block' : 'none';
+            });
+        });
+
+        // Subscribe Form Handler
+        document.getElementById('subscribeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const contact = document.getElementById('contact').value;
+            const type = document.querySelector('input[name="contactType"]:checked').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact, type })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Subscribed successfully! ${type === 'sms' ? 'Subscription ARN: ' + data.subscriptionArn : ''}`);
+                } else {
+                    alert('Subscription failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Unsubscribe Form Handler
+        document.getElementById('unsubscribeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const subscriptionArn = document.getElementById('subscriptionArn').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/unsubscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscriptionArn })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Unsubscribed successfully!');
+                } else {
+                    alert('Unsubscription failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Send Message Form Handler
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = document.getElementById('message').value;
+            const type = document.querySelector('input[name="messageType"]:checked').value;
+            const recipients = type === 'email' ? 
+                document.getElementById('recipients').value.split(',').map(email => email.trim()) : 
+                [];
+            
+            try {
+                const response = await fetch(`${API_URL}/send-message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, type, recipients })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Message sent successfully!`);
+                } else {
+                    alert('Message sending failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "aws-sns-messaging",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "mkdir -p dist && cp -r public/* dist/ && cp src/index.js dist/"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.716.0",
+    "@aws-sdk/client-ses": "^3.716.0",
+    "@aws-sdk/client-sns": "^3.716.0",
+    "@aws-sdk/lib-dynamodb": "^3.716.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}
